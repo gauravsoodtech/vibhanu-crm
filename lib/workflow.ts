@@ -6,9 +6,9 @@ export type Role = (typeof ROLES)[number];
 export const STAGES = ["communication", "vigilance", "support", "sales", "claimed"] as const;
 export type Stage = (typeof STAGES)[number];
 
-export type Field = "name" | "contact_number" | "postal_address" | "visit_date" | "visit_time" | "remark";
+export type Field = "name" | "contact_number" | "postal_address" | "visit_date" | "visit_time" | "remark" | "project" | "budget";
 
-const DETAILS: Field[] = ["name", "postal_address", "visit_date", "visit_time", "remark"];
+const DETAILS: Field[] = ["name", "postal_address", "visit_date", "visit_time", "remark", "project", "budget"];
 
 export const FLOW: Record<Role, { label: string; works: Stage | null; next: Stage; action: string; editable: Field[] }> = {
   marketing: { label: "Marketing", works: null, next: "communication", action: "Create", editable: ["name", "contact_number"] },

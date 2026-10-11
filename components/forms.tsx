@@ -14,6 +14,7 @@ import {
   startListening,
   type Result,
 } from "@/app/actions";
+import { BUDGETS, PROJECTS } from "@/lib/projects";
 import type { Lead } from "@/lib/queries";
 
 function Flash({ state }: { state: Result }) {
@@ -96,6 +97,26 @@ export function DetailsForm({ lead, actionLabel, needsAudio }: { lead: Lead; act
         <div>
           <label className="label" htmlFor="visit_time">Time</label>
           <input id="visit_time" name="visit_time" type="time" defaultValue={lead.visit_time?.slice(0, 5) ?? ""} className="input" />
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="label" htmlFor="project">Project of interest</label>
+          <select id="project" name="project" defaultValue={lead.project ?? ""} className="input">
+            <option value="">Select project</option>
+            {PROJECTS.map((g) => (
+              <optgroup key={g.company} label={g.company}>
+                {g.items.map((p) => <option key={p}>{p}</option>)}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label" htmlFor="budget">Budget</label>
+          <select id="budget" name="budget" defaultValue={lead.budget ?? ""} className="input">
+            <option value="">Select budget</option>
+            {BUDGETS.map((b) => <option key={b}>{b}</option>)}
+          </select>
         </div>
       </div>
       <div>

@@ -62,6 +62,8 @@ export default async function Sales(props: PageProps<"/sales">) {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Postal address" value={full.postal_address} />
               <Field label="Remark" value={full.remark} />
+              <Field label="Project of interest" value={full.project} />
+              <Field label="Budget" value={full.budget} />
             </div>
             <div>
               <p className="label">Call recording</p>

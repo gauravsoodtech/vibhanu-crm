@@ -18,6 +18,9 @@ describe("workflow", () => {
     }
     expect(pickEditable("marketing", { contact_number: " 9876543210 " })).toEqual({ contact_number: "9876543210" });
     expect(pickEditable("support", { name: "x" })).toEqual({});
+    expect(pickEditable("communication", { project: "M3M", budget: "1 to 2 Cr" })).toEqual({ project: "M3M", budget: "1 to 2 Cr" });
+    expect(pickEditable("vigilance", { project: "Omaxe" })).toEqual({ project: "Omaxe" });
+    expect(pickEditable("support", { project: "M3M" })).toEqual({});
   });
 
   it("requires meeting details before Meeting / Verified", () => {

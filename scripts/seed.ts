@@ -1,5 +1,5 @@
 // Creates the 5 department logins from the assessment brief. Safe to run again.
-// Usage: npm run seed            (add --reset to also wipe all leads and recordings)
+// Usage: npm run seed   |   npm run reset (wipe leads + recordings)   |   npm run demo (reset + sample leads)
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 
@@ -40,7 +40,41 @@ async function main() {
     if (delErr) throw delErr;
     console.log("reset: all leads, events and recordings removed");
   }
+
+  if (process.argv.includes("--demo")) {
+    const ids = Object.fromEntries((await sb.auth.admin.listUsers({ perPage: 200 })).data.users.map((u) => [u.app_metadata?.role, u.id]));
+    for (const [i, d] of DEMO.entries()) {
+      const at = (min: number) => new Date(Date.now() - (DEMO.length - i) * 37 * 60_000 + min * 60_000).toISOString();
+      const { data, error: e } = await sb.from("leads").insert({ ...d.lead, created_by: ids.marketing, created_at: at(0), updated_at: at(d.lead.stage === "vigilance" ? 25 : 0) }).select("id").single();
+      if (e) throw e;
+      const evts = [{ actor_email: "marketing@vibhanu.com", role: "marketing", action: "Create", at: at(0) }];
+      if (d.lead.stage === "vigilance") evts.push({ actor_email: "communication@vibhanu.com", role: "communication", action: "Meeting", at: at(25) });
+      await sb.from("lead_events").insert(evts.map((ev) => ({ ...ev, lead_id: data.id })));
+    }
+    console.log(`demo: ${DEMO.length} sample leads added (made-up names)`);
+  }
 }
+
+// Made-up sample leads so the queues look like a working day. No audio, no AI output: those come from the live demo.
+const DEMO: { lead: Record<string, string> }[] = [
+  { lead: { name: "Rohit Malhotra", contact_number: "9810045321", stage: "communication" } },
+  { lead: { name: "Sneha Kapoor", contact_number: "9958312047", stage: "communication" } },
+  { lead: { name: "Vikas Yadav", contact_number: "8800654190", stage: "communication" } },
+  {
+    lead: {
+      name: "Anjali Mehra", contact_number: "9716203458", stage: "vigilance",
+      postal_address: "House 142, Sector 57, Gurugram, Haryana 122003", visit_date: "2026-10-17", visit_time: "11:00",
+      project: "Dholera SIR, residential plot", budget: "Under 50 L", remark: "Wants a 200 sq yd plot near the expressway, asked about resale value.",
+    },
+  },
+  {
+    lead: {
+      name: "Karan Bhatia", contact_number: "9899017623", stage: "vigilance",
+      postal_address: "Flat 704, Tower 3, Sector 82, Gurugram, Haryana 122004", visit_date: "2026-10-18", visit_time: "16:30",
+      project: "Signature Global", budget: "1 to 2 Cr", remark: "Looking for 3BHK on Dwarka Expressway, needs home loan help.",
+    },
+  },
+];
 
 main().catch((e) => {
   console.error(e);

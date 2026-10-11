@@ -10,6 +10,8 @@ export type Lead = {
   visit_date: string | null;
   visit_time: string | null;
   remark: string | null;
+  project: string | null;
+  budget: string | null;
   stage: Stage;
   audio_path: string | null;
   audio_duration_s: number | null;

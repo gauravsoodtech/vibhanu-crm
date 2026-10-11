@@ -19,6 +19,8 @@ export default async function Support(props: PageProps<"/support">) {
               <Field label="Name" value={lead.name} />
               <Field label="Contact" value={<span className="font-mono">{lead.contact_number}</span>} />
               <Field label="Remark" value={lead.remark} />
+              <Field label="Project of interest" value={lead.project} />
+              <Field label="Budget" value={lead.budget} />
             </div>
             <AllocateForm key={lead.id} lead={lead} date={fmtDate(lead.visit_date) ?? ""} time={fmtClock(lead.visit_time) ?? ""} />
             <Timeline items={await events(lead.id)} />

@@ -25,7 +25,10 @@ export async function analyseCall(wav: ArrayBuffer): Promise<CallInsight> {
       {
         role: "system",
         content:
-          "You help a real estate sales team. Given a call transcript (it may be Hindi, English or mixed), " +
+          "You help the sales team of Vibh-Anu (Vibhavangal Anukulakara), a Gurugram real estate group: " +
+          "Sampatti sells projects by M3M, Signature Global, Omaxe and Pure Construction; Vibhanu Developer sells " +
+          "residential and commercial plots in Dholera Smart City (SIR); Reend arranges home loans. " +
+          "Given a call transcript (it may be Hindi, English or mixed), name the project if the caller mentions one, and " +
           'reply in JSON: {"summary": "2-3 plain English sentences: who called, what they want, budget/location/timeline if said, next step", ' +
           '"tag": "hot" | "warm" | "cold"} where hot = clear intent to buy or visit soon, warm = interested but unsure, cold = not interested or no info.',
       },

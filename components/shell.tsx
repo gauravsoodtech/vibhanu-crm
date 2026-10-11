@@ -37,7 +37,8 @@ export async function Shell({ session, denied, ok, children }: { session: Sessio
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="font-display text-2xl font-semibold italic text-gold">Vibh-Anu</span>
-            <span className="hidden text-sm text-white/60 sm:inline">Lead CRM</span>
+            <span lang="hi" className="hidden font-hindi text-base text-gold/80 md:inline">विभवंगल अनुकुलकारा</span>
+            <span className="hidden text-sm text-white/60 sm:inline">· Lead CRM</span>
           </div>
           <div className="flex items-center gap-3 text-sm">
             <span className="rounded-full bg-gold px-3 py-1 text-xs font-bold uppercase tracking-wide text-forest">{FLOW[session.role].label}</span>

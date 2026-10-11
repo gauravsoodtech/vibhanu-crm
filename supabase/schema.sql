@@ -71,3 +71,6 @@ alter table lead_events enable row level security;
 insert into storage.buckets (id, name, public, file_size_limit)
 values ('call-recordings', 'call-recordings', false, 26214400)
 on conflict (id) do nothing;
+
+-- v2: project of interest + budget (Communication / Vigilance fill these)
+alter table leads add column if not exists project text, add column if not exists budget text;

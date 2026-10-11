@@ -1,7 +1,7 @@
 import "server-only";
 import OpenAI, { toFile } from "openai";
 
-// Groq exposes an OpenAI-compatible API with free Whisper + Llama.
+// Groq exposes an OpenAI-compatible API with free Whisper + open-weight LLMs.
 const client = () => new OpenAI({ apiKey: process.env.GROQ_API_KEY, baseURL: "https://api.groq.com/openai/v1" });
 
 export type CallInsight = { transcript: string; summary: string; tag: "hot" | "warm" | "cold" };
@@ -12,11 +12,13 @@ export async function analyseCall(wav: ArrayBuffer): Promise<CallInsight> {
   const t = await groq.audio.transcriptions.create({
     file: await toFile(Buffer.from(wav), "call.wav", { type: "audio/wav" }),
     model: "whisper-large-v3-turbo",
+    // Spelling hint for names Whisper has never heard (it wrote "Bihabanggala Nukulakara" without this).
+    prompt: "Vibh-Anu, Vibhavangal Anukulakara. Real estate call about a property, site visit, budget, Gurugram.",
   });
   const transcript = t.text.trim();
 
   const res = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
+    model: "openai/gpt-oss-120b",
     temperature: 0.2,
     response_format: { type: "json_object" },
     messages: [

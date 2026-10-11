@@ -13,6 +13,7 @@
   --font-sans: var(--font-jakarta);
   --font-display: var(--font-fraunces);
   --font-hindi: var(--font-tiro);
+  --font-logo: var(--font-comfortaa);
 }
 
 body {

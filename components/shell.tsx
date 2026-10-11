@@ -12,6 +12,15 @@ const STEP_ICON: Record<Role, string> = {
   sales: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0",
 };
 
+/** Their logo: thin rounded wordmark with a red V (vibhavangal.com footer). */
+export function Wordmark({ className = "" }: { className?: string }) {
+  return (
+    <span className={`font-logo font-light tracking-tight ${className}`} aria-label="Vibh-Anu">
+      <span className="font-semibold text-[#e3262b]">V</span>ibh-Anu
+    </span>
+  );
+}
+
 export function Icon({ d, className = "h-4 w-4" }: { d: string; className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
@@ -36,7 +45,7 @@ export async function Shell({ session, denied, ok, children }: { session: Sessio
       <header className="bg-forest text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
           <div className="flex items-center gap-3">
-            <span className="font-display text-2xl font-semibold italic text-gold">Vibh-Anu</span>
+            <Wordmark className="text-3xl text-gold" />
             <span lang="hi" className="hidden font-hindi text-base text-gold/80 md:inline">विभवंगल अनुकुलकारा</span>
             <span className="hidden text-sm text-white/60 sm:inline">· Lead CRM</span>
           </div>

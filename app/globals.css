@@ -1,26 +1,36 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Vibh-Anu brand: deep green, gold, cream (from their company profile) */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-forest: #0b3b2c;
+  --color-forest-2: #12503c;
+  --color-gold: #c79a3a;
+  --color-gold-soft: #f3e6c4;
+  --color-cream: #f8f4ec;
+  --color-ink: #1d2a25;
+  --color-muted: #6b7a73;
+  --color-line: #e5dccb;
+  --font-sans: var(--font-jakarta);
+  --font-display: var(--font-fraunces);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-ink);
+}
+
+.card {
+  @apply rounded-2xl border border-line bg-white shadow-[0_1px_2px_rgba(11,59,44,0.06)];
+}
+.label {
+  @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-muted;
+}
+.input {
+  @apply w-full rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none transition focus:border-gold focus:ring-2 focus:ring-gold/30 disabled:bg-cream disabled:text-muted read-only:bg-cream read-only:text-muted;
+}
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg bg-forest px-4 py-2 text-sm font-semibold text-white transition hover:bg-forest-2 disabled:cursor-not-allowed disabled:opacity-40;
+}
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-forest transition hover:border-gold disabled:opacity-40;
 }

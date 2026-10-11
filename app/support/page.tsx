@@ -5,11 +5,11 @@ import { requireRole } from "@/lib/supabase";
 
 export default async function Support(props: PageProps<"/support">) {
   const s = await requireRole("support");
-  const { id, denied } = (await props.searchParams) as Record<string, string | undefined>;
+  const { id, denied, ok } = (await props.searchParams) as Record<string, string | undefined>;
   const [queue, lead] = await Promise.all([leadsAt("support"), getLead(id, "support")]);
 
   return (
-    <Shell session={s} denied={denied}>
+    <Shell session={s} denied={denied} ok={ok}>
       <PageTitle title="Allocation" hint="Step 4. Verify the date, time and complete address. Allocate sends the verified lead to Sales." />
       <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
         <LeadList leads={queue} selected={id} empty="No verified leads waiting." />

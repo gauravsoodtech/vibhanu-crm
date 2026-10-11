@@ -9,7 +9,7 @@ const LOCKED_COLS = "id, name, contact_number, stage, audio_duration_s, audio_pl
 
 export default async function Sales(props: PageProps<"/sales">) {
   const s = await requireRole("sales");
-  const { id, denied } = (await props.searchParams) as Record<string, string | undefined>;
+  const { id, denied, ok } = (await props.searchParams) as Record<string, string | undefined>;
 
   const [{ data: open }, { data: mine }] = await Promise.all([
     db().from("leads").select(LOCKED_COLS).eq("stage", "sales").order("updated_at", { ascending: false }),
@@ -22,7 +22,7 @@ export default async function Sales(props: PageProps<"/sales">) {
   const full = claimed.find((l) => l.id === id);
 
   return (
-    <Shell session={s} denied={denied}>
+    <Shell session={s} denied={denied} ok={ok}>
       <PageTitle title="Sales desk" hint="Step 5. Play the call recording completely, then claim the lead to unlock the full details." />
       <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
         <div className="space-y-5">

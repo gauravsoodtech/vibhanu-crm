@@ -20,7 +20,7 @@ export function Icon({ d, className = "h-4 w-4" }: { d: string; className?: stri
   );
 }
 
-export async function Shell({ session, denied, children }: { session: Session; denied?: string; children: React.ReactNode }) {
+export async function Shell({ session, denied, ok, children }: { session: Session; denied?: string; ok?: string; children: React.ReactNode }) {
   const counts = await stageCounts();
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const waiting: Record<Role, number> = {
@@ -79,6 +79,12 @@ export async function Shell({ session, denied, children }: { session: Session; d
           <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
             Access denied: the {FLOW[denied as Role]?.label ?? denied} area is only for that department. You were sent back to your own dashboard.
           </p>
+        </div>
+      )}
+
+      {ok && (
+        <div className="mx-auto mt-4 max-w-7xl px-4">
+          <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800">{ok}</p>
         </div>
       )}
 

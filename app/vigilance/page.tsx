@@ -5,17 +5,17 @@ import { requireRole } from "@/lib/supabase";
 
 export default async function Vigilance(props: PageProps<"/vigilance">) {
   const s = await requireRole("vigilance");
-  const { id, denied } = (await props.searchParams) as Record<string, string | undefined>;
+  const { id, denied, ok } = (await props.searchParams) as Record<string, string | undefined>;
   const [queue, lead] = await Promise.all([leadsAt("vigilance"), getLead(id, "vigilance")]);
 
   return (
-    <Shell session={s} denied={denied}>
+    <Shell session={s} denied={denied} ok={ok}>
       <PageTitle title="Verification" hint="Step 3. Check and correct the details, add the call recording (mandatory). Verified sends the lead to Support." />
       <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
         <LeadList leads={queue} selected={id} empty="Nothing to verify right now." />
         {lead ? (
           <div className="card space-y-6 p-6">
-            <AudioUploader key={lead.audio_path} leadId={lead.id} currentUrl={await audioUrl(lead.audio_path)} />
+            <AudioUploader leadId={lead.id} currentUrl={await audioUrl(lead.audio_path)} />
             {lead.audio_path && (
               <div className="rounded-xl bg-cream p-4">
                 <div className="mb-1 flex items-center gap-2">

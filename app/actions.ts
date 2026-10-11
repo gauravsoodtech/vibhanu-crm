@@ -26,7 +26,9 @@ async function advance(s: Session, id: string): Promise<Result> {
   const { data } = await db().from("leads").update({ stage: to }).eq("id", id).eq("stage", from).select("id");
   if (!data?.length) return { error: "This lead was already moved by someone else." };
   await log(id, s, FLOW[s.role].action);
-  return done(`${FLOW[s.role].action}: lead sent to ${FLOW[to as Role]?.label ?? "claimed"}.`);
+  revalidatePath("/", "layout");
+  const msg = to === "claimed" ? "Lead claimed. Full details unlocked." : `${FLOW[s.role].action} done. Lead sent to ${FLOW[to as Role].label}.`;
+  redirect(`/${s.role}?${new URLSearchParams(to === "claimed" ? { id, ok: msg } : { ok: msg })}`);
 }
 
 // ---------- auth ----------
@@ -203,5 +205,6 @@ export async function claimLead(_: Result, fd: FormData): Promise<Result> {
     .select("id");
   if (!data?.length) return { error: "Play the full recording before claiming (or it was already claimed)." };
   await log(id, s, "Claim");
-  return done("Lead claimed. Full details unlocked.");
+  revalidatePath("/", "layout");
+  redirect(`/sales?${new URLSearchParams({ id, ok: "Lead claimed. Full details unlocked." })}`);
 }

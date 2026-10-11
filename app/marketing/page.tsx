@@ -5,7 +5,7 @@ import { STAGE_LABEL, type Stage } from "@/lib/workflow";
 
 export default async function Marketing(props: PageProps<"/marketing">) {
   const s = await requireRole("marketing");
-  const { denied } = (await props.searchParams) as Record<string, string | undefined>;
+  const { denied, ok } = (await props.searchParams) as Record<string, string | undefined>;
   const { data: mine } = await db()
     .from("leads")
     .select("id, name, contact_number, stage, created_at")
@@ -14,7 +14,7 @@ export default async function Marketing(props: PageProps<"/marketing">) {
     .limit(50);
 
   return (
-    <Shell session={s} denied={denied}>
+    <Shell session={s} denied={denied} ok={ok}>
       <PageTitle title="New lead" hint="Step 1. Enter the name and contact number. Create sends the lead to Communication." />
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         <div className="card h-fit p-6">

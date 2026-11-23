@@ -1,3 +1,4 @@
+import { Dialer } from "@/components/dialer";
 import { ListenAndClaim } from "@/components/forms";
 import { AiTag, Field, fmtClock, fmtDate, fmtTime, LeadList, PageTitle, Shell, Timeline } from "@/components/shell";
 import { audioUrl, events, type Lead } from "@/lib/queries";
@@ -65,8 +66,9 @@ export default async function Sales(props: PageProps<"/sales">) {
               <Field label="Project of interest" value={full.project} />
               <Field label="Budget" value={full.budget} />
             </div>
+            <Dialer key={full.id} leadId={full.id} phone={full.contact_number} />
             <div>
-              <p className="label">Call recording</p>
+              <p className="label">Verified call recording</p>
               <audio controls src={(await audioUrl(full.audio_path)) ?? undefined} className="w-full" preload="metadata" />
             </div>
             <div className="grid gap-4 md:grid-cols-2">

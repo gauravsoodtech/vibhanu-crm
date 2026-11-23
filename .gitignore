@@ -43,3 +43,7 @@ next-env.d.ts
 public/zz-*
 
 .vercel
+
+# dialer: scrcpy + adb binaries, and recordings waiting to upload
+/dialer/bin/
+/dialer/recordings/

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vibh-Anu Dialer</title>
+<style>
+  :root { --forest: #0b3b2c; --gold: #c79a3a; --soft: #f3e6c4; --cream: #f8f4ec; --ink: #1d2a25; --muted: #5f6d66; --line: #e5dccb; --red: #b3261e; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--cream); color: var(--ink); font: 15px/1.45 "Segoe UI", system-ui, sans-serif; }
+  header { background: var(--forest); color: #fff; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .logo { font-size: 22px; color: var(--gold); }
+  .logo b { color: #e3262b; }
+  main { max-width: 520px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 4px; color: var(--forest); }
+  p { margin: 0; }
+  .muted { color: var(--muted); font-size: 13px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin: 12px 0 4px; }
+  input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; }
+  input:focus-visible, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; }
+  button { font: inherit; font-weight: 600; border: 0; border-radius: 999px; padding: 9px 18px; background: var(--forest); color: #fff; cursor: pointer; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .wide { width: 100%; margin-top: 16px; padding: 12px; }
+  .ghost { background: transparent; border: 1px solid #ffffff55; padding: 5px 12px; font-size: 13px; }
+  .stop { background: var(--red); }
+  .err { color: var(--red); font-size: 14px; margin-top: 10px; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .row + .row { margin-top: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--red); flex: none; }
+  .dot.on { background: #1f9d61; }
+  .call { background: var(--forest); color: #fff; text-align: center; padding: 22px 16px; border: 0; }
+  .call .num { font: 600 22px/1.3 Consolas, monospace; }
+  .call .state { color: var(--soft); margin: 6px 0 14px; }
+  .rec { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ff4d42; margin-right: 6px; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .2; } }
+  @media (prefers-reduced-motion: reduce) { .rec { animation: none; } }
+  ul { list-style: none; margin: 10px 0 0; padding: 0; }
+  li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+  li b { display: block; }
+  .mono { font: 13px Consolas, monospace; color: var(--muted); }
+  .note { border-radius: 10px; padding: 10px 12px; font-size: 14px; background: #fdecea; color: var(--red); }
+  .note.ok { background: #e6f4ec; color: #14613c; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo"><b>V</b>ibh-Anu <span style="color:#fff;font-size:15px">Dialer</span></span>
+  <button class="ghost" id="logout" hidden>Log out</button>
+</header>
+<main>
+  <form class="card" id="login" hidden>
+    <h1>Log in</h1>
+    <p class="muted">Use the same email and password as the CRM.</p>
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="username" required>
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <p class="err" id="loginErr" role="alert"></p>
+    <button class="wide" id="loginBtn">Log in</button>
+  </form>
+
+  <section class="card call" id="call" hidden aria-live="polite">
+    <p id="cName"></p>
+    <p class="num" id="cNum"></p>
+    <p class="state"><span class="rec" id="cRec"></span><span id="cState"></span></p>
+    <button class="stop" id="hang">Hang up</button>
+  </section>
+
+  <p class="note" id="last" hidden role="status"></p>
+
+  <section class="card" id="status" hidden>
+    <div class="row"><span class="dot" id="phoneDot"></span><span id="phoneText"></span></div>
+    <div class="row"><span class="dot" id="crmDot"></span><span id="crmText"></span></div>
+  </section>
+
+  <section class="card" id="leads" hidden>
+    <h1>Leads to call</h1>
+    <p class="muted">You can also click Call in the CRM. Every call is recorded: tell the customer first.</p>
+    <p class="err" id="callErr" role="alert"></p>
+    <ul id="list"></ul>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const api = (path, body) =>
+  fetch(path, { method: body ? "POST" : "GET", headers: { "x-dialer": "1", "content-type": "application/json" }, body: body && JSON.stringify(body) }).then((r) => r.json());
+const clock = (ms) => { const t = Math.max(0, Math.floor(ms / 1000)); return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); };
+const show = (id, on) => { $(id).hidden = !on; };
+let shown = "";
+
+$("login").onsubmit = async (e) => {
+  e.preventDefault();
+  $("loginBtn").disabled = true;
+  $("loginErr").textContent = "";
+  const r = await api("/login", { email: $("email").value, password: $("password").value }).catch(() => ({ error: "Dialer is not running." }));
+  $("loginErr").textContent = r.error || "";
+  if (!r.error) $("password").value = "";
+  $("loginBtn").disabled = false;
+  tick();
+};
+$("logout").onclick = async () => { await api("/logout", {}); tick(); };
+$("hang").onclick = () => api("/hangup", {});
+
+async function tick() {
+  let s;
+  try { s = await api("/state"); } catch { $("crmText").textContent = "Dialer program is not running."; $("crmDot").className = "dot"; return; }
+  const inn = !!s.user, a = s.active, ready = s.phone && s.phone.state === "device";
+  show("login", !inn); show("logout", inn); show("status", true); show("leads", inn); show("call", !!a);
+  $("phoneDot").className = "dot" + (ready ? " on" : "");
+  $("phoneText").textContent = ready ? "Phone: " + (s.phone.name || "connected") : s.phone && s.phone.state === "unauthorized" ? "Phone: tap Allow on the phone screen" : "Phone: not connected. Plug in the USB cable.";
+  $("crmDot").className = "dot" + (inn && s.crmOnline ? " on" : "");
+  $("crmText").textContent = !inn ? "CRM: not logged in" : !s.crmOnline ? "CRM: no internet, trying again" : "CRM: " + s.user.email + (s.pending && !a ? " (" + s.pending + " recording waiting to upload)" : "");
+  if (a) {
+    $("cName").textContent = a.name || "";
+    $("cNum").textContent = a.number ? "+91 " + a.number.slice(0, 5) + " " + a.number.slice(5) : "";
+    $("cState").textContent = a.state === "talking" ? "On call, recording " + clock(Date.now() - a.since) : a.state === "saving" ? "Saving the recording in the CRM..." : "Dialing...";
+    show("cRec", a.state === "talking"); show("hang", a.state !== "saving");
+  }
+  show("last", !!s.last && !a);
+  if (s.last) { $("last").textContent = (s.last.name ? s.last.name + ": " : "") + s.last.text; $("last").className = "note" + (s.last.ok ? " ok" : ""); }
+  const key = JSON.stringify([s.leads, ready, !!a]);
+  if (key !== shown) {
+    shown = key;
+    $("list").replaceChildren(...s.leads.map((l) => {
+      const li = document.createElement("li"), d = document.createElement("div"), b = document.createElement("b"), n = document.createElement("span"), c = document.createElement("button");
+      b.textContent = l.name; n.className = "mono"; n.textContent = "+91 " + l.contact_number; c.textContent = "Call"; c.disabled = !ready || !!a;
+      c.onclick = async () => { c.disabled = true; const r = await api("/call", { leadId: l.id }); $("callErr").textContent = r.error || ""; tick(); };
+      d.append(b, n); li.append(d, c); return li;
+    }));
+  }
+}
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>

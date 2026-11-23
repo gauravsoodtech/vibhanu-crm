@@ -1,6 +1,7 @@
+import { Dialer } from "@/components/dialer";
 import { DetailsForm } from "@/components/forms";
 import { LeadList, PageTitle, Shell, Timeline } from "@/components/shell";
-import { events, getLead, leadsAt } from "@/lib/queries";
+import { events, formKey, getLead, leadsAt } from "@/lib/queries";
 import { requireRole } from "@/lib/supabase";
 
 export default async function Communication(props: PageProps<"/communication">) {
@@ -15,7 +16,8 @@ export default async function Communication(props: PageProps<"/communication">) 
         <LeadList leads={queue} selected={id} empty="No new leads from Marketing." />
         {lead ? (
           <div className="card space-y-6 p-6">
-            <DetailsForm key={lead.id + lead.updated_at} lead={lead} actionLabel="Meeting" />
+            <Dialer key={lead.id} leadId={lead.id} phone={lead.contact_number} />
+            <DetailsForm key={formKey(lead)} lead={lead} actionLabel="Meeting" />
             <Timeline items={await events(lead.id)} />
           </div>
         ) : (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { listenedFully, maskPhone, missingFields, nextStage, normalizePhone, pickEditable } from "./workflow";
+import { canDial, listenedFully, maskPhone, missingFields, nextStage, normalizePhone, pickEditable } from "./workflow";
 
 describe("workflow", () => {
   it("moves each lead one step, only by the owning role", () => {
@@ -34,6 +34,17 @@ describe("workflow", () => {
     expect(normalizePhone("12345")).toBeNull();
     expect(normalizePhone("5876543210")).toBeNull();
     expect(maskPhone("9876543210")).toBe("98xxxxxx10");
+  });
+
+  it("lets only the department holding the lead (or its claimer) call it", () => {
+    expect(canDial("communication", "communication", false)).toBe(true);
+    expect(canDial("vigilance", "vigilance", false)).toBe(true);
+    expect(canDial("communication", "vigilance", false)).toBe(false);
+    expect(canDial("sales", "sales", false)).toBe(false); // number is still masked
+    expect(canDial("sales", "claimed", true)).toBe(true);
+    expect(canDial("sales", "claimed", false)).toBe(false);
+    expect(canDial("marketing", "communication", false)).toBe(false);
+    expect(canDial("support", "support", true)).toBe(false);
   });
 
   it("only counts a full listen", () => {

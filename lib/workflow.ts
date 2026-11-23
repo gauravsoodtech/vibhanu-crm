@@ -67,6 +67,27 @@ export function maskPhone(p: string): string {
   return p.length < 4 ? "xxxx" : p.slice(0, 2) + "x".repeat(p.length - 4) + p.slice(-2);
 }
 
+/** Who may call a lead: the department holding it, or the Sales person who claimed it. */
+export function canDial(role: Role, stage: Stage, claimedByMe: boolean): boolean {
+  if (role === "communication" || role === "vigilance") return FLOW[role].works === stage;
+  return role === "sales" && stage === "claimed" && claimedByMe;
+}
+
+/** Numbers of the made-up demo leads (scripts/seed.ts). They may belong to real people, so the dialer never calls them. */
+export const DEMO_PHONES = ["9810045321", "9958312047", "8800654190", "9716203458", "9899017623"];
+
+/** A request the phone has not picked up after this long is dead (nobody wants a surprise call later). */
+export const REQUEST_TTL_S = 30;
+/** A call that never reported back after this long is treated as lost. */
+export const STALE_CALL_S = 15 * 60;
+
+export const AUDIO_EXT = ["aac", "mp3", "m4a", "wav", "ogg", "webm"];
+/** Formats Whisper accepts directly. */
+export const AI_EXT = ["mp3", "m4a", "wav", "ogg", "webm"];
+export function normalizeExt(raw: string): string {
+  return raw.trim().toLowerCase().replace(/^\./, "");
+}
+
 /** Sales may only claim after listening to the whole call (5% slack for timer jitter). */
 export function listenedFully(startedAt: Date, endedAt: Date, durationS: number): boolean {
   return (endedAt.getTime() - startedAt.getTime()) / 1000 >= durationS * 0.95;

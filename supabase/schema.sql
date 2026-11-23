@@ -74,3 +74,37 @@ on conflict (id) do nothing;
 
 -- v2: project of interest + budget (Communication / Vigilance fill these)
 alter table leads add column if not exists project text, add column if not exists budget text;
+
+-- v3: dialer. One row per call; the PC dialer and the CRM screen both work on it.
+create table if not exists calls (
+  id          uuid primary key default gen_random_uuid(),
+  lead_id     uuid not null references leads on delete cascade,
+  agent_id    uuid not null references auth.users,
+  agent_email text not null,
+  role        text not null,
+  via         text not null default 'phone' check (via in ('phone', 'browser')),
+  status      text not null default 'requested'
+              check (status in ('requested', 'dialing', 'saving', 'saved', 'no_answer', 'failed')),
+  note        text,
+  duration_s  numeric,
+  audio_path  text,
+  transcript  text,
+  ai_summary  text,
+  ai_tag      text check (ai_tag in ('hot', 'warm', 'cold')),
+  ai_status   text check (ai_status in ('pending', 'done', 'failed')),
+  created_at  timestamptz not null default now(),
+  ended_at    timestamptz
+);
+create index if not exists calls_lead_idx on calls (lead_id, created_at desc);
+-- An agent can only be on one call at a time, enforced by the DB.
+create unique index if not exists calls_one_active on calls (agent_id) where status in ('requested', 'dialing');
+
+-- Last time each agent's dialer checked in ("phone connected" light in the CRM).
+create table if not exists dialer_phones (
+  agent_id uuid primary key references auth.users,
+  device   text not null,
+  seen_at  timestamptz not null default now()
+);
+
+alter table calls enable row level security;
+alter table dialer_phones enable row level security;

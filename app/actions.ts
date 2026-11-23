@@ -3,16 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { analyseCall } from "@/lib/ai";
+import { createCall, endCall } from "@/lib/calls";
+import { logEvent as log } from "@/lib/queries";
 import { authClient, BUCKET, db, getSession, requireRole, type Session } from "@/lib/supabase";
-import { FLOW, isRole, listenedFully, missingFields, nextStage, normalizePhone, pickEditable, type Role } from "@/lib/workflow";
+import { AUDIO_EXT, FLOW, isRole, listenedFully, missingFields, nextStage, normalizePhone, pickEditable, type Role } from "@/lib/workflow";
 
 export type Result = { error?: string; ok?: string } | null;
-
-const AUDIO_EXT = ["aac", "mp3", "m4a", "wav", "ogg", "webm"];
-
-async function log(leadId: string, s: Session, action: string) {
-  await db().from("lead_events").insert({ lead_id: leadId, actor_email: s.email, role: s.role, action });
-}
 
 function done(ok: string): Result {
   revalidatePath("/", "layout");
@@ -49,7 +45,7 @@ export async function signIn(_: Result, fd: FormData): Promise<Result> {
 }
 
 export async function signOut() {
-  await (await authClient()).auth.signOut();
+  await (await authClient()).auth.signOut({ scope: "local" }); // only this browser: the PC dialer stays logged in
   redirect("/login");
 }
 
@@ -127,14 +123,18 @@ export async function attachAudio(id: string, path: string, wavPath: string | nu
     .update({ audio_path: path, audio_duration_s: Math.round(durationS * 100) / 100, transcript: null, ai_summary: null, ai_tag: null })
     .eq("id", id);
   if (error) return { error: error.message };
-  if (old.audio_path) await db().storage.from(BUCKET).remove([old.audio_path]);
+  if (old.audio_path) {
+    // A dialer recording stays in the call history even when Vigilance uploads a different file.
+    const { count } = await db().from("calls").select("id", { count: "exact", head: true }).eq("audio_path", old.audio_path);
+    if (count === 0) await db().storage.from(BUCKET).remove([old.audio_path]);
+  }
   await log(id, s, old.audio_path ? "Replaced call recording" : "Added call recording");
 
   if (!wavPath) return done("Recording saved. (AI skipped: browser could not decode this format.)");
   try {
     const { data: wav, error: dlErr } = await db().storage.from(BUCKET).download(wavPath);
     if (dlErr) throw dlErr;
-    const ai = await analyseCall(await wav.arrayBuffer());
+    const ai = await analyseCall(await wav.arrayBuffer(), "call.wav");
     await db().from("leads").update({ transcript: ai.transcript, ai_summary: ai.summary, ai_tag: ai.tag }).eq("id", id);
     return done("Recording saved. AI transcript and summary ready.");
   } catch (e) {
@@ -143,6 +143,23 @@ export async function attachAudio(id: string, path: string, wavPath: string | nu
   } finally {
     await db().storage.from(BUCKET).remove([wavPath]);
   }
+}
+
+// ---------- Dialer (Communication, Vigilance, Sales) ----------
+
+/** Call button in the CRM: leaves a request that the agent's PC dialer picks up and dials. */
+export async function requestCall(leadId: string): Promise<{ error?: string }> {
+  const s = await getSession();
+  if (!s) redirect("/login");
+  const r = await createCall(s, leadId, "requested");
+  return "error" in r ? { error: r.error } : {};
+}
+
+export async function cancelCall(callId: string): Promise<{ error?: string }> {
+  const s = await getSession();
+  if (!s) redirect("/login");
+  const r = await endCall(s, callId, "failed", "Cancelled in the CRM");
+  return "error" in r ? { error: r.error } : {};
 }
 
 // ---------- 4. Support ----------

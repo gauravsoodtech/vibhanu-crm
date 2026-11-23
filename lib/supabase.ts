@@ -1,6 +1,6 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type JwtPayload, type Session as AuthSession } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isRole, type Role } from "./workflow";
@@ -35,8 +35,37 @@ export function db() {
 export type Session = { userId: string; email: string; role: Role };
 
 export async function getSession(): Promise<Session | null> {
-  const { data } = await (await authClient()).auth.getClaims();
-  const c = data?.claims;
+  return toSession((await (await authClient()).auth.getClaims()).data?.claims);
+}
+
+/** PC dialer: same CRM login, sent as "Authorization: Bearer <access token>" instead of a cookie. */
+export async function bearerSession(req: Request): Promise<Session | null> {
+  const token = req.headers.get("authorization")?.match(/^Bearer (.+)$/)?.[1];
+  if (!token) return null;
+  try {
+    const { data } = await tokenClient().auth.getClaims(token);
+    return toSession(data?.claims);
+  } catch {
+    return null; // not a JWT at all: getClaims throws while decoding it
+  }
+}
+
+/** Login for the PC dialer: same users and passwords as the CRM, answered with tokens instead of cookies. */
+export async function tokenLogin(email: string, password: string) {
+  const { data } = await tokenClient().auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+  return tokens(data.session) ?? { error: "Wrong email or password." };
+}
+export async function tokenRefresh(refresh: string) {
+  const { data } = await tokenClient().auth.refreshSession({ refresh_token: refresh });
+  return tokens(data.session) ?? { error: "Please log in again." };
+}
+const tokenClient = () => createClient(url, publishableKey, { auth: { persistSession: false, autoRefreshToken: false } });
+function tokens(s: AuthSession | null) {
+  const role = s?.user.app_metadata?.role;
+  return s && isRole(role) ? { access: s.access_token, refresh: s.refresh_token, email: s.user.email ?? "", role } : null;
+}
+
+function toSession(c: JwtPayload | undefined): Session | null {
   const role = c?.app_metadata?.role;
   if (!c?.sub || !isRole(role)) return null;
   return { userId: c.sub, email: String(c.email ?? ""), role };

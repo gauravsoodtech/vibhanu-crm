@@ -1,5 +1,5 @@
 import "server-only";
-import { BUCKET, db } from "./supabase";
+import { BUCKET, db, type Session } from "./supabase";
 import { STAGES, type Stage } from "./workflow";
 
 export type Lead = {
@@ -47,6 +47,15 @@ export async function getLead(id: string | undefined, stage: Stage): Promise<Lea
 export async function events(leadId: string): Promise<LeadEvent[]> {
   const { data } = await db().from("lead_events").select("*").eq("lead_id", leadId).order("at");
   return data ?? [];
+}
+
+export async function logEvent(leadId: string, s: Session, action: string) {
+  await db().from("lead_events").insert({ lead_id: leadId, actor_email: s.email, role: s.role, action });
+}
+
+/** Remounts the details form only when the details change, so a finished call never wipes what the agent is typing. */
+export function formKey(l: Lead) {
+  return [l.id, l.name, l.postal_address, l.visit_date, l.visit_time, l.remark, l.project, l.budget].join("|");
 }
 
 export async function audioUrl(path: string | null) {

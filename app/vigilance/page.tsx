@@ -1,6 +1,7 @@
+import { Dialer } from "@/components/dialer";
 import { AudioUploader, DetailsForm } from "@/components/forms";
 import { AiTag, LeadList, PageTitle, Shell, Timeline } from "@/components/shell";
-import { audioUrl, events, getLead, leadsAt } from "@/lib/queries";
+import { audioUrl, events, formKey, getLead, leadsAt } from "@/lib/queries";
 import { requireRole } from "@/lib/supabase";
 
 export default async function Vigilance(props: PageProps<"/vigilance">) {
@@ -15,6 +16,7 @@ export default async function Vigilance(props: PageProps<"/vigilance">) {
         <LeadList leads={queue} selected={id} empty="Nothing to verify right now." />
         {lead ? (
           <div className="card space-y-6 p-6">
+            <Dialer key={lead.id} leadId={lead.id} phone={lead.contact_number} />
             <AudioUploader leadId={lead.id} currentUrl={await audioUrl(lead.audio_path)} />
             {lead.audio_path && (
               <div className="rounded-xl bg-cream p-4">
@@ -25,7 +27,7 @@ export default async function Vigilance(props: PageProps<"/vigilance">) {
                 <p className="text-sm">{lead.ai_summary || <span className="text-muted">Not available for this recording.</span>}</p>
               </div>
             )}
-            <DetailsForm key={lead.id + lead.updated_at} lead={lead} actionLabel="Verified" needsAudio />
+            <DetailsForm key={formKey(lead)} lead={lead} actionLabel="Verified" needsAudio />
             <Timeline items={await events(lead.id)} />
           </div>
         ) : (

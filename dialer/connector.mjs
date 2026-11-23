@@ -1,7 +1,7 @@
 // Vibh-Anu Dialer: runs on the agent's PC with the phone on USB.
 // CRM login -> dial -> record automatically -> save in the CRM. Start: npm run dialer
 import { spawn } from "node:child_process";
-import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -240,10 +240,19 @@ createServer(async (req, res) => {
   }
 }).listen(PORT, "127.0.0.1", () => {
   console.log(`Vibh-Anu Dialer: http://${HOST}  (CRM: ${CRM})`);
-  if (process.platform === "win32" && !process.env.DIALER_NO_WINDOW) {
-    spawn("cmd", ["/c", "start", "", "msedge", `--app=http://${HOST}/`, "--window-size=440,780"], { windowsHide: true, stdio: "ignore" });
-  }
+  if (process.platform === "win32" && !process.env.DIALER_NO_WINDOW) openWindow(`http://${HOST}/`);
+}).on("error", (e) => {
+  console.error(e.code === "EADDRINUSE" ? "The dialer is already running. Close the other window first." : e.message);
+  process.exit(1);
 });
+
+/** A small app window in Chrome or Edge, otherwise the default browser. */
+function openWindow(url) {
+  const { ProgramFiles = "", "ProgramFiles(x86)": x86 = "" } = process.env;
+  const exe = [join(ProgramFiles, "Google/Chrome/Application/chrome.exe"), join(x86, "Microsoft/Edge/Application/msedge.exe")].find(existsSync);
+  const [cmd, args] = exe ? [exe, [`--app=${url}`, "--window-size=440,780"]] : ["cmd", ["/c", "start", "", url]];
+  spawn(cmd, args, { detached: true, stdio: "ignore" }).on("error", () => console.log(`Open ${url} in your browser.`)).unref();
+}
 
 void phoneLoop();
 void crmLoop();
